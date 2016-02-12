@@ -10,11 +10,11 @@ import sys
 DSN = 'dbname=testDB'
 
 
-def generate_schema():
+def generate_schema(filename):
     """Drop and create tables."""
     with psycopg2.connect(DSN) as conn:
         with conn.cursor() as cur:
-            with open('schema1.sql') as ifile:
+            with open(filename) as ifile:
                 cur.execute(ifile.read())
     conn.close()
 
@@ -81,8 +81,8 @@ class Generator(object):
         for user in users:
             for post in posts(p_post_id, user):
                 for comment in comments(p_comment_id, post):
-                    for like in likes(p_like_id, comment):
-                        p_like_id = like + 1
+                    # for like in likes(p_like_id, comment):
+                        # p_like_id = like + 1
                     p_comment_id = comment + 1
                 p_post_id = post + 1
 
@@ -91,42 +91,11 @@ class Generator(object):
         self.conn.close()
 
 
-# TODO don't  try to understand, just refactor
-def query(id, query_string):
-    """Query the data."""
-    breadcrumbs = query_string.split('.')
-    field_name = breadcrumbs[-1]
-
-    prev_table = 'users'
-    join_clause = [prev_table + ' ']
-    where_clause = ['{table}._id = %s '.format(table=prev_table)]
-    args = [id]
-    for table, index in grouper(breadcrumbs[:-1], 2):
-        join_clause.append(' {rtable} on {ltable}._id = {rtable}.{ltable_id} '.
-                           format(ltable=prev_table, rtable=table, ltable_id=prev_table[:-1] + '_id'))
-        where_clause.append(' {ltable}.{rtable}_index = %s '.format(ltable=table, rtable=prev_table[:-1]))
-        prev_table = table
-        args.append(index)
-
-    sql = 'select {table}.{field} from {join} where {where}'.format(
-        table=breadcrumbs[-3],
-        field=field_name,
-        join='join'.join(join_clause),
-        where='and'.join(where_clause))
-
-    with psycopg2.connect(DSN) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, tuple(args))
-            res = cur.fetchmany()
-    conn.close()
-    return res
-
-
 def main():
     """Main function."""
-    generate_schema()
+    generate_schema('schema1.sql')
 
-    g = Generator(40)
+    g = Generator(100)
     g.generate_data()
     return 0
 
