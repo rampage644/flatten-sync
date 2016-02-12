@@ -48,10 +48,30 @@ create table comments (_id TEXT, content TEXT, u_id TEXT, u_index INT, p_id TEXT
  * Query comments table to get some field vale
  * Delete all records related to some user `_id` from all tables.
 
+ ## How to
+
+```bash
+python schema1.py # generate data according to schema1
+python schema2.py # generate data according to schema2
+```
+
+```sql
+# query to get id for update
+select comments.value from users join posts on users._id = posts.user_id join comments on posts._id = comments.post_id where users._id = '33' and posts.user_index = 27 and comments.post_index = 14; # for schema1
+select comments.value from comments where user_id = '33' and post_index = 27 and index = 14; # for schema2
+
+# delete stmts for nested strucure updates
+delete from comments where user_id = '33'; 
+delete from posts where user_id = '33'; 
+delete from users where _id = '33'; 
+```
+
 ## Results
 
  * Do **not** use postgre features such as `CASCADE DELETE` of any kind of constraints (foreign key: `REFERENCES`). Implement all sync logic on app side: will make updates **much** faster and can easily switch SQL engine.
  * **No** difference between schemas. 
+ * Query results in 150ms for 1M table.
+ * Delete takes 150ms to remove 10000 records in 1M table. I guess, `logN` complexity
 
 ## TODO
 
